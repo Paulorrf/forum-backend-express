@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model category {
+  id           Int    @id @default(autoincrement())
+  name         String @db.VarChar(255)
+  description  String @db.VarChar(255)
+  postquantity Int?
+  post         post[]
+}
+
+model comentario {
+  id       Int     @id @default(autoincrement())
+  mensagem String? @db.VarChar(255)
+  users_id Int
+  post_id  Int?
+  post     post?   @relation(fields: [post_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users    users   @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model post {
+  id          Int          @id @default(autoincrement())
+  title       String       @db.VarChar(255)
+  mensagem    String       @db.VarChar(255)
+  users_id    Int
+  category_id Int
+  comentario  comentario[]
+  category    category     @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users        @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model refresh_token {
+  id                 Int    @id @default(autoincrement())
+  refresh_tk         String
+  access_token       String
+  access_expires_in  String @db.VarChar(255)
+  refresh_expires_in String @db.VarChar(255)
+  users_id           Int    @unique(map: "constraint_users_id")
+  users              users  @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id            Int            @id @default(autoincrement())
+  name          String         @db.VarChar(255)
+  email         String         @unique(map: "user_email") @db.VarChar(255)
+  password      String         @db.VarChar(255)
+  comentario    comentario[]
+  post          post[]
+  refresh_token refresh_token?
+}

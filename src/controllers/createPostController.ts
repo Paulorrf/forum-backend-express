@@ -31,14 +31,13 @@ export const createPost = async (req: Request, res: Response) => {
       });
 
       console.log("post salvo");
-      res.send(savedPost);
+      return res.sendStatus(200).json(savedPost);
     } catch (error) {
       console.log("erro ao salvar o post");
-      res.send({ message: error });
+      return res.sendStatus(403).send({ message: error });
     }
-  } catch (err) {
+  } catch (error) {
     console.log("nao foi possivel achar o usuario");
+    return res.sendStatus(403).send({ message: error });
   }
-
-  // res.send({ title, mensagem, users_id, category_id });
 };

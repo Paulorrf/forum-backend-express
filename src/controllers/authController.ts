@@ -50,7 +50,7 @@ export const loginUser = async (req: Request, res: Response) => {
           { email },
           String(process.env.ACCESS_TOKEN_SECRET),
           {
-            expiresIn: "1d",
+            expiresIn: "10s",
           }
         );
         const refreshToken = jwt.sign(

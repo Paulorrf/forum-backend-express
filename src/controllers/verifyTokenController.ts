@@ -4,8 +4,10 @@ import { Request, Response } from "express";
 import prisma from "../utils/prismaClient";
 
 export const verifyTokenController = async (req: Request, res: Response) => {
-  const cookies = req.body.token;
-  // console.log(cookies);
+  const cookies = req.body;
+  // const cookies = req.cookies.tk || "";
+  console.log("cookies");
+  console.log(cookies);
   //@ts-ignore
   // const cookies = cookies2.split("=")[1];
   // const cookies = req.body.token;
@@ -13,7 +15,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
   if (Object.keys(cookies).length === 0) {
     console.log("nenhum access cookie encontradoo");
-    return res.sendStatus(201); // forbidden
+    return res.sendStatus(201).json({ message: "not access token found" }); // forbidden
     // res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
   }
 
@@ -33,19 +35,40 @@ export const verifyTokenController = async (req: Request, res: Response) => {
     //@ts-ignore
     return res.json({ isLogged: true, email: tokenIsValid.email });
   } catch (error) {
-    console.log("access token is invalid: ");
+    console.log("controller? access token is invalid: ");
 
-    const jwtValue = jwt.decode(cookies);
+    const jwtValue = jwt.decode(cookies.token);
 
     //limpa os cookies
     // res.clearCookie("accessToken", { httpOnly: false });
+    console.log("jwtvalue");
     console.log(jwtValue);
+    console.log("jwtvalue");
+
+    //@ts-ignore
+    if (!jwtValue.email) {
+      return res.json({ isLogged: false });
+    }
+
+    const foundUser = await prisma.users.findFirst({
+      where: {
+        //@ts-ignore
+        email: jwtValue.email,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (foundUser === null) {
+      return res.sendStatus(403);
+    }
 
     try {
       const refreshTk = await prisma.refresh_token.findUnique({
         where: {
           //@ts-ignore
-          users_id: Number(jwtValue.id),
+          users_id: Number(foundUser.id),
         },
       });
 
@@ -60,7 +83,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
 
         try {
           const accessToken = jwt.sign(
-            { id: refreshIsValid.id, email: refreshIsValid.email },
+            { email: refreshIsValid.email },
             String(process.env.ACCESS_TOKEN_SECRET),
             {
               expiresIn: "10s",
@@ -68,32 +91,48 @@ export const verifyTokenController = async (req: Request, res: Response) => {
           );
 
           const refreshToken = jwt.sign(
-            { id: refreshIsValid.id, email: refreshIsValid.email },
+            { email: refreshIsValid.email },
             String(process.env.REFRESH_TOKEN_SECRET),
             {
-              expiresIn: "60s",
+              expiresIn: "1d",
             }
           );
 
           const savedRefresh = await prisma.refresh_token.upsert({
             where: {
-              users_id: refreshIsValid.id,
+              users_id: foundUser.id,
             },
             update: {
               access_token: accessToken,
               refresh_tk: refreshToken,
-              users_id: refreshIsValid.id,
+              users_id: foundUser.id,
             },
             create: {
               access_expires_in: "20s",
               refresh_expires_in: "10d",
               access_token: accessToken,
               refresh_tk: refreshToken,
-              users_id: refreshIsValid.id,
+              users_id: foundUser.id,
             },
           });
 
           console.log(savedRefresh);
+
+          let expiresIn = new Date(Date.now() + 86400 * 1000);
+          res.clearCookie("tk", { httpOnly: false });
+
+          res.setHeader(
+            "Set-Cookie",
+            cookie.serialize("tk", accessToken, {
+              maxAge: 1000 * 60 * 15, //15 minutes
+              httpOnly: false, // The cookie only accessible by the web server
+              path: "/",
+              secure: true,
+              expires: expiresIn,
+              sameSite: "none",
+              // priority: "high",
+            })
+          );
 
           // res.setHeader(
           //   "Set-Cookie",
@@ -102,9 +141,12 @@ export const verifyTokenController = async (req: Request, res: Response) => {
           //     maxAge: 60 * 60 * 24 * 7, // 1 week
           //   })
           // );
-          res.json({ message: "teste" });
+          //@ts-ignore
+          res.json({ email: jwtValue.email, isLogged: true });
         } catch (err) {
-          console.log("nao foi possivel criar um novo refresh token");
+          console.log(
+            "controller: nao foi possivel criar um novo refresh token"
+          );
           res.sendStatus(403); //forbidden
         }
       } catch (error) {

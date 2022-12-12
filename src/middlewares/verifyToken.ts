@@ -4,30 +4,37 @@ import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prismaClient";
 
 const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
-  const cookies = cookie.parse(req.headers.cookie || "");
-  // const cookies = req.body.token;
+  // const cookies = cookie.parse(req.headers.cookie || "");
+  const cookies = req.cookies.tk;
 
   if (Object.keys(cookies).length === 0) {
-    console.log("nenhum access cookie encontrado");
-    res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
+    console.log("nenhum access cookie encontradoo");
+    return res.sendStatus(201); // forbidden
+    // res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
   }
 
-  console.log("cookies");
-  console.log(cookies);
+  // console.log("cookies");
+  // console.log(cookies);
 
   try {
-    const tokenIsValid = jwt.verify(cookies.accessToken, "dspaojdspoadsaodksa");
-    console.log("access token is valid");
+    const tokenIsValid = jwt.verify(
+      cookies,
+      String(process.env.ACCESS_TOKEN_SECRET)
+    );
+    console.log("controller: access token is valid");
+    console.log(tokenIsValid);
     // console.log(tokenIsValid);
     // console.log("token dentro do cookie");
     // console.log(cookies.accessToken);
+    //@ts-ignore
+    return res.json({ isLogged: true, email: tokenIsValid.email });
   } catch (error) {
     console.log("access token is invalid: ");
 
-    const jwtValue = jwt.decode(cookies.accessToken);
+    const jwtValue = jwt.decode(cookies);
 
     //limpa os cookies
-    res.clearCookie("accessToken", { httpOnly: false });
+    // res.clearCookie("accessToken", { httpOnly: false });
     console.log(jwtValue);
 
     try {
@@ -42,7 +49,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
         const refreshIsValid = jwt.verify(
           //@ts-ignore
           refreshTk?.refresh_tk,
-          "dsaoindsadmnsaosda"
+          String(process.env.REFRESH_TOKEN_SECRET)
         );
 
         console.log("refresh é valido");
@@ -50,7 +57,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
         try {
           const accessToken = jwt.sign(
             { id: refreshIsValid.id, email: refreshIsValid.email },
-            "dspaojdspoadsaodksa",
+            String(process.env.ACCESS_TOKEN_SECRET),
             {
               expiresIn: "10s",
             }
@@ -58,7 +65,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
 
           const refreshToken = jwt.sign(
             { id: refreshIsValid.id, email: refreshIsValid.email },
-            "dsaoindsadmnsaosda",
+            String(process.env.REFRESH_TOKEN_SECRET),
             {
               expiresIn: "60s",
             }
@@ -91,6 +98,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
           //     maxAge: 60 * 60 * 24 * 7, // 1 week
           //   })
           // );
+          res.json({ message: "teste" });
         } catch (err) {
           console.log("nao foi possivel criar um novo refresh token");
           res.sendStatus(403); //forbidden

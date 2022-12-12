@@ -5,6 +5,7 @@ import cors from "cors";
 import verifyToken from "./src/middlewares/verifyToken";
 import express from "express";
 import * as dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 // const corsOptions = {
 //   origin: "http://localhost:3000/",
@@ -14,16 +15,13 @@ import * as dotenv from "dotenv";
 // const express = require("express");
 dotenv.config();
 const app = express();
+app.use(cookieParser());
 
 // app.use(cors({ credentials: true, origin: "http://localhost:3000/" }));
 // app.options("*", cors());
 
-var corsOptions = {
-  origin: "http://localhost:3000",
-  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 // require("dotenv").config();
 
 app.use(
@@ -32,12 +30,13 @@ app.use(
     origin: "http://localhost:3000",
     optionsSuccessStatus: 200,
     credentials: true,
+    // exposedHeaders: ["Set-Cookie"],
   }),
   authRouter
 );
-// app.use("/", verifyToken, createPostRouter);
-app.use("/", createPostRouter);
 app.use("/", verifyTokenRoute);
+app.use("/", verifyToken, createPostRouter);
+// app.use("/", createPostRouter);
 // app.use("/", loginUser);
 
 const port = 5000;

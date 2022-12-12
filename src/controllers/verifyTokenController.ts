@@ -4,38 +4,41 @@ import { Request, Response } from "express";
 import prisma from "../utils/prismaClient";
 
 export const verifyTokenController = async (req: Request, res: Response) => {
-  const cookies = cookie.parse(req.headers.cookie || "");
-
-  const cookies2 = req.headers.cookie;
+  const cookies = req.body.token;
+  // console.log(cookies);
+  //@ts-ignore
+  // const cookies = cookies2.split("=")[1];
   // const cookies = req.body.token;
-  console.log(cookies);
-  console.log(cookies2);
+  // console.log(cookies.tk);
 
   if (Object.keys(cookies).length === 0) {
-    console.log("nenhum access cookie encontrado");
+    console.log("nenhum access cookie encontradoo");
     return res.sendStatus(201); // forbidden
     // res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
   }
 
-  console.log("cookies");
-  console.log(cookies);
+  // console.log("cookies");
+  // console.log(cookies);
 
   try {
     const tokenIsValid = jwt.verify(
-      cookies.accessToken,
+      cookies,
       String(process.env.ACCESS_TOKEN_SECRET)
     );
-    console.log("access token is valid");
+    console.log("controller: access token is valid");
+    console.log(tokenIsValid);
     // console.log(tokenIsValid);
     // console.log("token dentro do cookie");
     // console.log(cookies.accessToken);
+    //@ts-ignore
+    return res.json({ isLogged: true, email: tokenIsValid.email });
   } catch (error) {
     console.log("access token is invalid: ");
 
-    const jwtValue = jwt.decode(cookies.accessToken);
+    const jwtValue = jwt.decode(cookies);
 
     //limpa os cookies
-    res.clearCookie("accessToken", { httpOnly: false });
+    // res.clearCookie("accessToken", { httpOnly: false });
     console.log(jwtValue);
 
     try {

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import cookie from "cookie";
 import prisma from "../utils/prismaClient";
 import { Request, Response } from "express";
+import dayjs from "dayjs";
 
 export const createUser = async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -33,7 +34,7 @@ export const loginUser = async (req: Request, res: Response) => {
   console.log(email, password);
 
   //limpa os cookies
-  res.clearCookie("accessToken", { httpOnly: true });
+  // res.clearCookie("tk", { httpOnly: true });
 
   if (email !== "" && password !== "") {
     try {
@@ -46,17 +47,17 @@ export const loginUser = async (req: Request, res: Response) => {
 
       try {
         const accessToken = jwt.sign(
-          { id: foundUser.id, email },
+          { email },
           String(process.env.ACCESS_TOKEN_SECRET),
           {
-            expiresIn: "10s",
+            expiresIn: "1d",
           }
         );
         const refreshToken = jwt.sign(
-          { id: foundUser.id, email },
+          { email },
           String(process.env.REFRESH_TOKEN_SECRET),
           {
-            expiresIn: "50s",
+            expiresIn: "1d",
           }
         );
 
@@ -79,12 +80,31 @@ export const loginUser = async (req: Request, res: Response) => {
         });
         // res.header("Access-Control-Allow-Origin", "http://localhost:3000/");
 
+        let expiresIn = new Date(Date.now() + 86400 * 1000);
+
+        // res.cookie("tk", accessToken, {
+        //   maxAge: 1000 * 60 * 15, //15 minutes
+        //   httpOnly: true, // The cookie only accessible by the web server
+        //   path: "/",
+        //   secure: true,
+        //   sameSite: "none",
+        //   expires: expiresIn,
+        //   // signed: true,
+        //   // domain: "http://localhost:3000",
+        //   //@ts-ignore
+        //   // expires: dayjs.utc().hours(60).valueOf(),
+        // });
+
         res.setHeader(
           "Set-Cookie",
-          cookie.serialize("accessToken", accessToken, {
+          cookie.serialize("tk", accessToken, {
             maxAge: 1000 * 60 * 15, //15 minutes
-            httpOnly: true, // The cookie only accessible by the web server
+            httpOnly: false, // The cookie only accessible by the web server
             path: "/",
+            secure: true,
+            expires: expiresIn,
+            sameSite: "none",
+            // priority: "high",
           })
         );
 
@@ -100,7 +120,7 @@ export const loginUser = async (req: Request, res: Response) => {
         // res.statusCode = 302;
         // res.setHeader("Location", req.headers.referer || "/");
 
-        res.json({ token: accessToken, ok: true });
+        return res.json({ token: accessToken, ok: true });
         // res.end();
       } catch (error) {
         console.log("refresh cant be created");

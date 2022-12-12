@@ -3,6 +3,6 @@ import { verifyTokenController } from "../controllers/verifyTokenController";
 
 const router = Router();
 
-router.get("/verify-token", verifyTokenController);
+router.post("/verify-token", verifyTokenController);
 
 export { router as verifyTokenRoute };

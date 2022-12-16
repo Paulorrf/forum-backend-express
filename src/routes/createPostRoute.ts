@@ -3,6 +3,6 @@ import { createPost } from "../controllers/createPostController";
 
 const router = Router();
 
-router.post("/create", createPost);
+router.post("/", createPost);
 
 export { router as createPostRouter };

@@ -3,10 +3,10 @@ import { Request, Response } from "express";
 
 export const createPost = async (req: Request, res: Response) => {
   const { title, mensagem, email, category_id } = req.body;
-  console.log("title", title);
-  console.log("mensagem", mensagem);
-  console.log("email", email);
-  console.log("category_id", category_id);
+  // console.log("title", title);
+  // console.log("mensagem", mensagem);
+  // console.log("email", email);
+  // console.log("category_id", category_id);
 
   try {
     const foundUser: any = await prisma.users.findFirst({
@@ -18,7 +18,7 @@ export const createPost = async (req: Request, res: Response) => {
       },
     });
 
-    console.log(foundUser);
+    // console.log(foundUser);
 
     try {
       const savedPost = await prisma.post.create({

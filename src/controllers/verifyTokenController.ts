@@ -6,21 +6,23 @@ import prisma from "../utils/prismaClient";
 export const verifyTokenController = async (req: Request, res: Response) => {
   const cookies = req.body;
   // const cookies = req.cookies.tk || "";
-  console.log("cookies");
-  console.log(cookies);
   //@ts-ignore
   // const cookies = cookies2.split("=")[1];
   // const cookies = req.body.token;
   // console.log(cookies.tk);
 
   if (Object.keys(cookies).length === 0) {
-    console.log("nenhum access cookie encontradoo");
-    return res.sendStatus(201).json({ message: "not access token found" }); // forbidden
+    console.log("controller: nenhum access cookie encontradoo");
+    try {
+      return res
+        .send({ message: "no access token found", isLogged: false })
+        .status(200);
+    } catch (error) {
+      console.log("DEU RUIM");
+      return;
+    }
     // res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
   }
-
-  // console.log("cookies");
-  // console.log(cookies);
 
   try {
     const tokenIsValid = jwt.verify(
@@ -35,15 +37,9 @@ export const verifyTokenController = async (req: Request, res: Response) => {
     //@ts-ignore
     return res.json({ isLogged: true, email: tokenIsValid.email });
   } catch (error) {
-    console.log("controller? access token is invalid: ");
+    console.log("controller: access token is invalid");
 
     const jwtValue = jwt.decode(cookies.token);
-
-    //limpa os cookies
-    // res.clearCookie("accessToken", { httpOnly: false });
-    console.log("jwtvalue");
-    console.log(jwtValue);
-    console.log("jwtvalue");
 
     //@ts-ignore
     if (!jwtValue.email) {
@@ -116,7 +112,7 @@ export const verifyTokenController = async (req: Request, res: Response) => {
             },
           });
 
-          console.log(savedRefresh);
+          // console.log(savedRefresh);
 
           let expiresIn = new Date(Date.now() + 86400 * 1000);
           res.clearCookie("tk", { httpOnly: false });

@@ -1,6 +1,12 @@
 import { authRouter } from "./src/routes/authUser";
 import { createPostRouter } from "./src/routes/createPostRoute";
 import { verifyTokenRoute } from "./src/routes/verifyTokenRoute";
+import { lastPostsRoute } from "./src/routes/lastPostsRoute";
+import { getPostRoute } from "./src/routes/getPostRoute";
+import { createCommentRoute } from "./src/routes/createCommentRoute";
+import { updateCommentRoute } from "./src/routes/updateCommentRoute";
+import { deleteCommentRoute } from "./src/routes/deleteCommentRoute";
+import { getUserIdRoute } from "./src/routes/getUserIdRoute";
 import cors from "cors";
 import verifyToken from "./src/middlewares/verifyToken";
 import express from "express";
@@ -34,8 +40,14 @@ app.use(
   }),
   authRouter
 );
-app.use("/", verifyTokenRoute);
-app.use("/", verifyToken, createPostRouter);
+app.use("/delete-comment/id", deleteCommentRoute);
+app.use("/verify-token", verifyTokenRoute);
+app.use("/create-comment", createCommentRoute);
+app.use("/update-comment", updateCommentRoute);
+app.use("/get-userid", getUserIdRoute);
+app.use("/last-posts", lastPostsRoute);
+app.use("/post", getPostRoute);
+app.use("/create", verifyToken, createPostRouter);
 // app.use("/", createPostRouter);
 // app.use("/", loginUser);
 

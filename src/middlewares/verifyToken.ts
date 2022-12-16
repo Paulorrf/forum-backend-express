@@ -9,7 +9,7 @@ const verifyToken = async (req: Request, res: Response, next: NextFunction) => {
   console.log(cookies);
 
   if (Object.keys(cookies).length === 0) {
-    console.log("nenhum access cookie encontradoo");
+    console.log("middleware: nenhum access cookie encontradoo");
     return res.sendStatus(201); // forbidden
     // res.json({ message: "user is not logged in" }).sendStatus(403); //forbidden
   }
